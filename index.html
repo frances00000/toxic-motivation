@@ -11,16 +11,15 @@
       font-family: 'Arial Black', sans-serif;
       background-color: #111;
       color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       text-align: center;
       padding: 20px;
     }
 
-    input {
+    h1 {
+      margin-top: 30px;
+    }
+
+    input, select {
       padding: 15px;
       font-size: 1.2em;
       width: 80%;
@@ -39,25 +38,66 @@
       color: white;
       cursor: pointer;
       font-weight: bold;
+      margin: 5px;
     }
 
     button:hover {
       background-color: #e60000;
     }
 
-    #message {
+    #taskContainer {
       margin-top: 30px;
-      font-size: 1.5em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .taskCard {
+      background-color: #222;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
       color: #ff4d4d;
-      max-width: 600px;
+      font-size: 1.2em;
+      position: relative;
+      animation: floatUp 0.5s ease-out;
+    }
+
+    .removeBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff4d4d;
+      border: none;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .countdown {
+      margin-top: 10px;
+      font-size: 1em;
+      color: #fff;
+    }
+
+    @keyframes floatUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
   <h1>TOXIC MOTIVATOR</h1>
   <input type="text" id="taskInput" placeholder="What should you be doing?">
-  <button onclick="generateMessage()">SLAP ME WITH MOTIVATION</button>
-  <div id="message"></div>
+  <input type="number" id="minutesInput" placeholder="Deadline in minutes" min="1">
+  <button onclick="addTask()">SLAP ME WITH MOTIVATION</button>
+
+  <div id="taskContainer"></div>
 
   <script>
     const toxicLines = [
@@ -71,16 +111,43 @@
       "You want results but can’t do '{task}'? Pathetic."
     ];
 
-    function generateMessage() {
+    function addTask() {
       const task = document.getElementById("taskInput").value.trim();
-      const messageDiv = document.getElementById("message");
-      if (task === "") {
-        messageDiv.textContent = "Put something in the box. Don't waste my time.";
-        return;
-      }
+      const minutes = parseInt(document.getElementById("minutesInput").value);
+      if (task === "" || isNaN(minutes) || minutes <= 0) return;
+
       const random = toxicLines[Math.floor(Math.random() * toxicLines.length)];
-      const personalized = random.replaceAll("{task}", task.toUpperCase());
-      messageDiv.textContent = personalized;
+      const message = random.replaceAll("{task}", task.toUpperCase());
+
+      const container = document.getElementById("taskContainer");
+      const card = document.createElement("div");
+      card.className = "taskCard";
+      const id = `timer-${Date.now()}`;
+      card.innerHTML = `
+        <button class="removeBtn" onclick="this.parentElement.remove()">×</button>
+        ${message}<div class="countdown" id="${id}"></div>
+      `;
+      container.appendChild(card);
+
+      const deadline = Date.now() + minutes * 60000;
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const remaining = deadline - now;
+        const target = document.getElementById(id);
+        if (!target) return clearInterval(interval);
+        if (remaining <= 0) {
+          target.textContent = "⏰ TIME’S UP. WALA KA NA NAMANG NAGAWA. 😤",
+            "⏰ TIME’S UP.DI MO NANAMAN NAGAWA, ANO NA?! 😤" ;
+          clearInterval(interval);
+        } else {
+          const mins = Math.floor(remaining / 60000);
+          const secs = Math.floor((remaining % 60000) / 1000);
+          target.textContent = `⏳ ${mins}m ${secs}s left`;
+        }
+      }, 1000);
+
+      document.getElementById("taskInput").value = "";
+      document.getElementById("minutesInput").value = "";
     }
   </script>
 </body>
